@@ -1,0 +1,1 @@
+# Zendure-to-Home-Assistant
