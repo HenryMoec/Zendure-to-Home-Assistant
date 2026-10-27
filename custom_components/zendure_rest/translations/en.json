@@ -1,0 +1,63 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Add Zendure device",
+        "description": "IP address or hostname of the device on your local network.",
+        "data": {
+          "host": "Host / IP address"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Zendure device found",
+        "description": "Found {name} at {host}. Add it?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Unable to connect to the device.",
+      "invalid_response": "The device did not report a serial number."
+    },
+    "abort": {
+      "already_configured": "This device is already configured.",
+      "cannot_connect": "Unable to connect to the device.",
+      "invalid_response": "The device did not report a serial number."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Zendure REST",
+        "data": {
+          "scan_interval": "Polling interval (seconds)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "ac_mode": {
+        "name": "AC mode",
+        "state": {
+          "input": "AC input mode",
+          "output": "AC output mode"
+        }
+      },
+      "grid_reverse": {
+        "name": "Energy export",
+        "state": {
+          "disabled": "Disabled",
+          "allow": "Allowed",
+          "forbidden": "Forbidden"
+        }
+      },
+      "grid_off_mode": {
+        "name": "Off-grid mode",
+        "state": {
+          "normal": "Normal",
+          "eco": "Eco",
+          "off": "Off"
+        }
+      }
+    }
+  }
+}
