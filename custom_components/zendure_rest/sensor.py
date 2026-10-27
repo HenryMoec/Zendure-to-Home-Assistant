@@ -81,8 +81,6 @@ DEVICE_SENSORS: tuple[ZendureSensorDescription, ...] = (
     ZendureSensorDescription(key="dcStatus", name="DC-Status", **_DIAG),
     ZendureSensorDescription(key="pvStatus", name="PV-Status", **_DIAG),
     ZendureSensorDescription(key="gridState", name="Netzstatus", **_DIAG),
-    ZendureSensorDescription(key="gridReverse", name="Rückspeisung (gridReverse)", **_DIAG),
-    ZendureSensorDescription(key="gridOffMode", name="Netz-Aus-Modus", **_DIAG),
     ZendureSensorDescription(key="faultLevel", name="Fehlerlevel", **_DIAG),
 )
 
