@@ -22,8 +22,10 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .const import SYSTEM_UNIQUE_ID
 from .coordinator import ZendureConfigEntry, ZendureCoordinator
 from .entity import ZendureEntity, ZendurePackEntity
+from .system import async_setup_system_sensors
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -161,6 +163,10 @@ class ZendurePackSensor(ZendurePackEntity, SensorEntity):
 async def async_setup_entry(
     hass: HomeAssistant, entry: ZendureConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if entry.unique_id == SYSTEM_UNIQUE_ID:
+        async_setup_system_sensors(entry, async_add_entities)
+        return
+
     coordinator = entry.runtime_data
 
     # Nur Sensoren anlegen, deren Property das Gerät tatsächlich meldet

@@ -1,6 +1,6 @@
 {
   "domain": "zendure_rest",
-  "name": "Zendure to Home Assistant (lokal)",
+  "name": "Zendure REST (lokal)",
   "codeowners": [
     "@HenryMoec"
   ],
@@ -9,7 +9,7 @@
   "issue_tracker": "https://github.com/HenryMoec/Zendure-to-Home-Assistant/issues",
   "iot_class": "local_polling",
   "requirements": [],
-  "version": "0.2.2",
+  "version": "0.3.0",
   "zeroconf": [
     {
       "type": "_zendure._tcp.local."

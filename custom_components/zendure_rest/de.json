@@ -1,0 +1,63 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Zendure-Gerät hinzufügen",
+        "description": "IP-Adresse oder Hostname des Geräts im lokalen Netzwerk.",
+        "data": {
+          "host": "Host / IP-Adresse"
+        }
+      },
+      "discovery_confirm": {
+        "title": "Zendure-Gerät gefunden",
+        "description": "{name} unter {host} gefunden. Hinzufügen?"
+      }
+    },
+    "error": {
+      "cannot_connect": "Keine Verbindung zum Gerät möglich.",
+      "invalid_response": "Das Gerät hat keine Seriennummer gemeldet."
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits eingerichtet.",
+      "cannot_connect": "Keine Verbindung zum Gerät möglich.",
+      "invalid_response": "Das Gerät hat keine Seriennummer gemeldet."
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Zendure REST",
+        "data": {
+          "scan_interval": "Abfrageintervall (Sekunden)"
+        }
+      }
+    }
+  },
+  "entity": {
+    "select": {
+      "ac_mode": {
+        "name": "AC-Modus",
+        "state": {
+          "input": "AC-Eingangsmodus",
+          "output": "AC-Ausgangsmodus"
+        }
+      },
+      "grid_reverse": {
+        "name": "Energie Export",
+        "state": {
+          "disabled": "Deaktiviert",
+          "allow": "Erlaubt",
+          "forbidden": "Verboten"
+        }
+      },
+      "grid_off_mode": {
+        "name": "Off-Grid-Modus",
+        "state": {
+          "normal": "Normal",
+          "eco": "Eco",
+          "off": "Aus"
+        }
+      }
+    }
+  }
+}

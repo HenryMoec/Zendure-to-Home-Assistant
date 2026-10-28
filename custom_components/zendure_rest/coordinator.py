@@ -7,6 +7,7 @@ from typing import Any
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import ZendureApi, ZendureApiError
@@ -33,6 +34,8 @@ class ZendureCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         )
         self.api = api
         self.sn: str = entry.unique_id  # type: ignore[assignment]
+        # Kapazität je Pack (kWh), befüllt von den Kapazitäts-Number-Entitäten
+        self.pack_capacity: dict[str, float] = {}
 
     async def _async_update_data(self) -> dict[str, Any]:
         try:
@@ -57,7 +60,9 @@ class ZendureCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         try:
             await self.api.write_properties(self.sn, properties)
         except ZendureApiError as err:
-            raise UpdateFailed(str(err)) from err
+            raise HomeAssistantError(
+                f"Schreiben auf {self.config_entry.title} fehlgeschlagen: {err}"
+            ) from err
         data = dict(self.data)
         data["properties"] = {**data["properties"], **properties}
         self.async_set_updated_data(data)

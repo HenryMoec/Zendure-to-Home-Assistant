@@ -8,8 +8,10 @@ from homeassistant.const import EntityCategory
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .const import SYSTEM_UNIQUE_ID
 from .coordinator import ZendureConfigEntry, ZendureCoordinator
 from .entity import ZendureEntity
+from .system import async_setup_system_switches
 
 
 class ZendureSmartModeSwitch(ZendureEntity, SwitchEntity):
@@ -34,6 +36,9 @@ class ZendureSmartModeSwitch(ZendureEntity, SwitchEntity):
 async def async_setup_entry(
     hass: HomeAssistant, entry: ZendureConfigEntry, async_add_entities: AddEntitiesCallback
 ) -> None:
+    if entry.unique_id == SYSTEM_UNIQUE_ID:
+        async_setup_system_switches(entry, async_add_entities)
+        return
     c = entry.runtime_data
     if "smartMode" in c.data["properties"]:
         async_add_entities([ZendureSmartModeSwitch(c)])

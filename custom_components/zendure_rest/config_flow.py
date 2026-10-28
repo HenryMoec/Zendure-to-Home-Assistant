@@ -11,7 +11,13 @@ from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.service_info.zeroconf import ZeroconfServiceInfo
 
 from .api import ZendureApi, ZendureApiError
-from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN, MIN_SCAN_INTERVAL
+from .const import (
+    CONF_SCAN_INTERVAL,
+    DEFAULT_SCAN_INTERVAL,
+    DOMAIN,
+    MIN_SCAN_INTERVAL,
+    SYSTEM_UNIQUE_ID,
+)
 
 
 class ZendureConfigFlow(ConfigFlow, domain=DOMAIN):
@@ -20,6 +26,12 @@ class ZendureConfigFlow(ConfigFlow, domain=DOMAIN):
     def __init__(self) -> None:
         self._host: str | None = None
         self._title: str | None = None
+
+    async def async_step_import(self, import_data: dict[str, Any]) -> ConfigFlowResult:
+        """Legt den System Manager an (einmalig, automatisch)."""
+        await self.async_set_unique_id(SYSTEM_UNIQUE_ID)
+        self._abort_if_unique_id_configured()
+        return self.async_create_entry(title="System Manager", data={})
 
     async def async_step_zeroconf(
         self, discovery_info: ZeroconfServiceInfo
