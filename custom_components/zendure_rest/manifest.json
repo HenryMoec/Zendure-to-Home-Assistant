@@ -1,5 +1,5 @@
 {
-  "domain": "zendure_to_home_assistant",
+  "domain": "zendure_rest",
   "name": "Zendure to Home Assistant (lokal)",
   "codeowners": [
     "@HenryMoec"
