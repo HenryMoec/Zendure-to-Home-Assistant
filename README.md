@@ -1,4 +1,4 @@
-# Zendure REST (lokal)
+# Zendure to Home Assistant (lokal)
 
 Home-Assistant-Integration für Zendure SolarFlow-Geräte über die lokale REST-API (zenSDK).
 
