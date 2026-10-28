@@ -142,6 +142,38 @@ class ZendureSensor(ZendureEntity, SensorEntity):
         return fn(v) if fn else v
 
 
+def _as_float(value: Any) -> float:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return 0.0
+    return float(value)
+
+
+class ZendureBatteryPowerSensor(ZendureEntity, SensorEntity):
+    """Akkuleistung des Geräts: - Laden / + Entladen."""
+
+    _attr_name = "Gesamtleistung"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator: ZendureCoordinator) -> None:
+        super().__init__(coordinator, "batteryPower")
+
+    @property
+    def available(self) -> bool:
+        props = self.coordinator.data["properties"]
+        return self.coordinator.last_update_success and (
+            "packInputPower" in props or "outputPackPower" in props
+        )
+
+    @property
+    def native_value(self) -> float:
+        props = self.coordinator.data["properties"]
+        return round(
+            _as_float(props.get("packInputPower")) - _as_float(props.get("outputPackPower"))
+        )
+
+
 class ZendurePackSensor(ZendurePackEntity, SensorEntity):
     entity_description: ZendureSensorDescription
 
@@ -174,6 +206,8 @@ async def async_setup_entry(
     async_add_entities(
         ZendureSensor(coordinator, d) for d in DEVICE_SENSORS if d.key in props
     )
+    if "packInputPower" in props or "outputPackPower" in props:
+        async_add_entities([ZendureBatteryPowerSensor(coordinator)])
 
     known_packs: set[str] = set()
 
