@@ -84,6 +84,10 @@ DEVICE_SENSORS: tuple[ZendureSensorDescription, ...] = (
     ZendureSensorDescription(key="pvStatus", name="PV-Status", **_DIAG),
     ZendureSensorDescription(key="gridState", name="Netzstatus", **_DIAG),
     ZendureSensorDescription(key="faultLevel", name="Fehlerlevel", **_DIAG),
+    ZendureSensorDescription(
+        key="smartMode", name="Smart Mode",
+        value_fn=lambda v: "An" if v else "Aus", **_DIAG,
+    ),
 )
 
 PACK_SENSORS: tuple[ZendureSensorDescription, ...] = (
@@ -174,6 +178,34 @@ class ZendureBatteryPowerSensor(ZendureEntity, SensorEntity):
         )
 
 
+class ZendurePackPowerSensor(ZendureEntity, SensorEntity):
+    """Summe der Leistungen aller Akku-Packs eines Geräts (Rohwerte der Packs)."""
+
+    _attr_name = "Packleistung gesamt"
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, coordinator: ZendureCoordinator) -> None:
+        super().__init__(coordinator, "packPowerTotal")
+
+    def _values(self) -> list[float]:
+        return [
+            float(p["power"])
+            for p in self.coordinator.data["packs"].values()
+            if isinstance(p.get("power"), (int, float)) and not isinstance(p.get("power"), bool)
+        ]
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.last_update_success and bool(self._values())
+
+    @property
+    def native_value(self) -> float | None:
+        values = self._values()
+        return round(sum(values)) if values else None
+
+
 class ZendurePackSensor(ZendurePackEntity, SensorEntity):
     entity_description: ZendureSensorDescription
 
@@ -210,12 +242,16 @@ async def async_setup_entry(
         async_add_entities([ZendureBatteryPowerSensor(coordinator)])
 
     known_packs: set[str] = set()
+    summary_added: list[bool] = []
 
     def _add_new_packs() -> None:
         new = [sn for sn in coordinator.data["packs"] if sn not in known_packs]
         if not new:
             return
         known_packs.update(new)
+        if not summary_added:
+            summary_added.append(True)
+            async_add_entities([ZendurePackPowerSensor(coordinator)])
         async_add_entities(
             ZendurePackSensor(coordinator, sn, d)
             for sn in new

@@ -1,4 +1,4 @@
-"""Konstanten für Zendure REST."""
+"""Konstanten für Zendure to Home Assistant (lokal)."""
 DOMAIN = "zendure_rest"
 CONF_SCAN_INTERVAL = "scan_interval"
 DEFAULT_SCAN_INTERVAL = 10  # Sekunden

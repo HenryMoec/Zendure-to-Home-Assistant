@@ -149,7 +149,7 @@ class SystemEntity(Entity):
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, SYSTEM_UNIQUE_ID)},
             name="System Manager",
-            manufacturer="Zendure REST",
+            manufacturer="Zendure to Home Assistant (lokal)",
             model="Aggregation",
         )
 

@@ -26,7 +26,7 @@
   "options": {
     "step": {
       "init": {
-        "title": "Zendure REST",
+        "title": "Zendure to Home Assistant (lokal)",
         "data": {
           "scan_interval": "Abfrageintervall (Sekunden)"
         }

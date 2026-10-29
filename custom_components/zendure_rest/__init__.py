@@ -1,4 +1,4 @@
-"""Zendure REST (lokal) – Home-Assistant-Integration."""
+"""Zendure to Home Assistant (lokal) – Home-Assistant-Integration."""
 from __future__ import annotations
 
 from homeassistant.config_entries import SOURCE_IMPORT, ConfigEntry
@@ -11,7 +11,7 @@ from .api import ZendureApi
 from .const import DOMAIN, SIGNAL_UPDATE, SYSTEM_UNIQUE_ID
 from .coordinator import ZendureConfigEntry, ZendureCoordinator
 
-PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT, Platform.SWITCH]
+PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SELECT]
 SYSTEM_PLATFORMS = [Platform.SENSOR, Platform.NUMBER, Platform.SWITCH]
 
 
