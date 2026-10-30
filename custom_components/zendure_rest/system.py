@@ -4,9 +4,15 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from datetime import timedelta
 from typing import Any
 
-from homeassistant.components.number import NumberMode, RestoreNumber
+from homeassistant.components.number import (
+    NumberDeviceClass,
+    NumberEntity,
+    NumberMode,
+    RestoreNumber,
+)
 from homeassistant.components.sensor import (
     SensorDeviceClass,
     SensorEntity,
@@ -15,7 +21,14 @@ from homeassistant.components.sensor import (
 )
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.const import PERCENTAGE, STATE_ON, EntityCategory, UnitOfEnergy, UnitOfPower
+from homeassistant.const import (
+    PERCENTAGE,
+    STATE_ON,
+    EntityCategory,
+    UnitOfEnergy,
+    UnitOfPower,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.exceptions import HomeAssistantError, ServiceValidationError
 from homeassistant.helpers.device_registry import DeviceInfo
@@ -25,8 +38,11 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from .const import (
+    CONF_SCAN_INTERVAL,
     DEFAULT_PACK_KWH,
+    DEFAULT_SCAN_INTERVAL,
     DOMAIN,
+    MIN_SCAN_INTERVAL,
     SIGNAL_UPDATE,
     SYNC_RETRY_SECONDS,
     SYSTEM_UNIQUE_ID,
@@ -47,6 +63,7 @@ class SystemManager:
 
     def __init__(self, hass: HomeAssistant, entry: ConfigEntry) -> None:
         self.hass = hass
+        self._entry = entry
         self.targets: dict[str, float] = {}  # "min_soc" / "max_soc" in Prozent
         self.auto_sync = False
         self._last_try: dict[tuple[str, str], float] = {}
@@ -65,6 +82,34 @@ class SystemManager:
             if coordinator is not None and coordinator.last_update_success and coordinator.data:
                 result.append(coordinator)
         return result
+
+    def all_coordinators(self) -> list[ZendureCoordinator]:
+        """Alle geladenen Geräte, auch wenn sie gerade nicht antworten."""
+        result: list[ZendureCoordinator] = []
+        for entry in self.hass.config_entries.async_entries(DOMAIN):
+            if entry.unique_id == SYSTEM_UNIQUE_ID or entry.state is not ConfigEntryState.LOADED:
+                continue
+            coordinator = getattr(entry, "runtime_data", None)
+            if coordinator is not None:
+                result.append(coordinator)
+        return result
+
+    # ---- Abfrageintervall (gilt für alle Geräte) ------------------------
+    def current_scan_interval(self) -> int:
+        stored = self._entry.options.get(CONF_SCAN_INTERVAL)
+        if stored is not None:
+            return int(stored)
+        for c in self.all_coordinators():
+            if c.update_interval is not None:
+                return int(c.update_interval.total_seconds())
+        return DEFAULT_SCAN_INTERVAL
+
+    async def async_set_scan_interval(self, seconds: int) -> None:
+        self.hass.config_entries.async_update_entry(
+            self._entry, options={**self._entry.options, CONF_SCAN_INTERVAL: seconds}
+        )
+        for c in self.all_coordinators():
+            c.update_interval = timedelta(seconds=seconds)
 
     def stats(self) -> dict[str, Any]:
         coordinators = self.coordinators()
@@ -275,6 +320,30 @@ class SystemSocNumber(SystemEntity, RestoreNumber):
         await self.manager.async_push(self._prop, value)
 
 
+class SystemScanIntervalNumber(SystemEntity, NumberEntity):
+    """Abfrageintervall für alle Geräte in Sekunden."""
+
+    _attr_name = "Aktualisierungsintervall"
+    _attr_device_class = NumberDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.SECONDS
+    _attr_native_min_value = MIN_SCAN_INTERVAL
+    _attr_native_max_value = 3600
+    _attr_native_step = 1
+    _attr_mode = NumberMode.BOX
+    _attr_entity_category = EntityCategory.CONFIG
+
+    def __init__(self, manager: SystemManager) -> None:
+        super().__init__(manager, "scan_interval")
+
+    @property
+    def native_value(self) -> float:
+        return self.manager.current_scan_interval()
+
+    async def async_set_native_value(self, value: float) -> None:
+        await self.manager.async_set_scan_interval(int(value))
+        self.async_write_ha_state()
+
+
 # ----------------------------------------------------------------- Schalter
 class SystemAutoSyncSwitch(SystemEntity, SwitchEntity, RestoreEntity):
     _attr_name = "SoC-Grenzen automatisch angleichen"
@@ -318,6 +387,7 @@ def async_setup_system_numbers(entry: ConfigEntry, add: AddEntitiesCallback) -> 
         [
             SystemSocNumber(manager, "min_soc", "Gesamt-minSoC", "minSoc", 0, 50, 10),
             SystemSocNumber(manager, "max_soc", "Gesamt-maxSoC", "socSet", 40, 100, 80),
+            SystemScanIntervalNumber(manager),
         ]
     )
 

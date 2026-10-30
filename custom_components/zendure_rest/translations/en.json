@@ -23,16 +23,6 @@
       "invalid_response": "The device did not report a serial number."
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Zendure REST",
-        "data": {
-          "scan_interval": "Polling interval (seconds)"
-        }
-      }
-    }
-  },
   "entity": {
     "select": {
       "ac_mode": {

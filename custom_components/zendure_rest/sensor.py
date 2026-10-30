@@ -15,14 +15,16 @@ from homeassistant.const import (
     PERCENTAGE,
     EntityCategory,
     UnitOfElectricPotential,
+    UnitOfEnergy,
     UnitOfPower,
     UnitOfTemperature,
     UnitOfTime,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.dispatcher import async_dispatcher_connect
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from .const import SYSTEM_UNIQUE_ID
+from .const import DEFAULT_PACK_KWH, SIGNAL_UPDATE, SYSTEM_UNIQUE_ID
 from .coordinator import ZendureConfigEntry, ZendureCoordinator
 from .entity import ZendureEntity, ZendurePackEntity
 from .system import async_setup_system_sensors
@@ -206,6 +208,47 @@ class ZendurePackPowerSensor(ZendureEntity, SensorEntity):
         return round(sum(values)) if values else None
 
 
+class ZendureRemainingCapacitySensor(ZendureEntity, SensorEntity):
+    """Restkapazität des Geräts in kWh (Summe Kapazität x SoC je Pack)."""
+
+    _attr_name = "Restkapazität"
+    _attr_device_class = SensorDeviceClass.ENERGY_STORAGE
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_suggested_display_precision = 2
+
+    def __init__(self, coordinator: ZendureCoordinator) -> None:
+        super().__init__(coordinator, "remainingCapacity")
+
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # Ändert sich eine Pack-Kapazität, sofort neu berechnen
+        self.async_on_remove(async_dispatcher_connect(self.hass, SIGNAL_UPDATE, self._refresh))
+
+    @callback
+    def _refresh(self) -> None:
+        self.async_write_ha_state()
+
+    def _remaining(self) -> float | None:
+        total = None
+        for sn, pack in self.coordinator.data["packs"].items():
+            soc = pack.get("socLevel")
+            if isinstance(soc, bool) or not isinstance(soc, (int, float)):
+                continue
+            cap = self.coordinator.pack_capacity.get(sn, DEFAULT_PACK_KWH)
+            total = (total or 0.0) + cap * soc / 100
+        return total
+
+    @property
+    def available(self) -> bool:
+        return self.coordinator.last_update_success and self._remaining() is not None
+
+    @property
+    def native_value(self) -> float | None:
+        value = self._remaining()
+        return None if value is None else round(value, 2)
+
+
 class ZendurePackSensor(ZendurePackEntity, SensorEntity):
     entity_description: ZendureSensorDescription
 
@@ -251,7 +294,9 @@ async def async_setup_entry(
         known_packs.update(new)
         if not summary_added:
             summary_added.append(True)
-            async_add_entities([ZendurePackPowerSensor(coordinator)])
+            async_add_entities(
+                [ZendurePackPowerSensor(coordinator), ZendureRemainingCapacitySensor(coordinator)]
+            )
         async_add_entities(
             ZendurePackSensor(coordinator, sn, d)
             for sn in new

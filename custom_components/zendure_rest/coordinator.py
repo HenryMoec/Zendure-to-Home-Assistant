@@ -11,11 +11,19 @@ from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import ZendureApi, ZendureApiError
-from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .const import CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN, SYSTEM_UNIQUE_ID
 
 _LOGGER = logging.getLogger(__name__)
 
 type ZendureConfigEntry = ConfigEntry[ZendureCoordinator]
+
+
+def _initial_interval(hass: HomeAssistant, entry: ConfigEntry) -> int:
+    """Intervall aus dem System Manager; Fallback: früherer Wert am Gerät, dann Standard."""
+    for e in hass.config_entries.async_entries(DOMAIN):
+        if e.unique_id == SYSTEM_UNIQUE_ID and CONF_SCAN_INTERVAL in e.options:
+            return e.options[CONF_SCAN_INTERVAL]
+    return entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
 
 
 class ZendureCoordinator(DataUpdateCoordinator[dict[str, Any]]):
@@ -24,7 +32,7 @@ class ZendureCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     def __init__(
         self, hass: HomeAssistant, entry: ZendureConfigEntry, api: ZendureApi
     ) -> None:
-        interval = entry.options.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
+        interval = _initial_interval(hass, entry)
         super().__init__(
             hass,
             _LOGGER,

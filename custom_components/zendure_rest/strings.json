@@ -23,16 +23,6 @@
       "invalid_response": "Das Gerät hat keine Seriennummer gemeldet."
     }
   },
-  "options": {
-    "step": {
-      "init": {
-        "title": "Zendure to Home Assistant (lokal)",
-        "data": {
-          "scan_interval": "Abfrageintervall (Sekunden)"
-        }
-      }
-    }
-  },
   "entity": {
     "select": {
       "ac_mode": {
